@@ -1,0 +1,134 @@
+﻿<link href="~/css/style.css" rel="stylesheet" />
+
+@model IEnumerable<UserView>
+
+
+<div style="text-align: right; margin-bottom: 10px;top:65px;position:relative">
+    <button onclick="openAddPopup()" class="btn btn-primary">Add New</button>
+</div>
+
+
+<table style="position:relative;top:60px">
+    <thead>
+        <tr>
+            <th>First Name</th>
+            <th>Last Name</th>
+            <th>Email</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var user in Model)
+        {
+            <tr>
+                <td>@user.FirstName</td>
+                <td>@user.LastName</td>
+                <td>@user.Email</td>
+                <td>
+                    <button onclick="openEditPopup(@user.Id)" class="edit-btn" data-id="@user.Id"><img src="~/images/edit-icon.svg"/></button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+
+<div id="editPopup" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeEditPopup()">&times;</span>
+        <div id="editFormContainer"></div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <script>
+
+        $(document).ready(function() {
+             $('#editPopup').hide(); // Ensure the popup is hidden when the page loads
+         });
+
+        function openEditPopup(userId) {
+            $.get('@Url.Action("Edit", "Home")', { id: userId }, function (data) {
+                $('#editFormContainer').html(data);
+                $('#editPopup').show();
+            });
+        }
+
+        function openAddPopup() {
+            $.get('@Url.Action("Create", "Home")', function (data) {
+                $('#editFormContainer').html(data);
+                $('#editPopup').show();
+            });
+        }
+
+        function closeEditPopup() {
+            $('#editPopup').hide();
+        }
+
+        function toggleAllCounties() {
+               var checkAll = document.getElementById("checkAllCounties");
+               var checkboxes = document.querySelectorAll("input[type='checkbox'][id^='county']");
+               var label = document.getElementById("checkAllLabel");
+
+               checkboxes.forEach(function(checkbox) {
+                   checkbox.checked = checkAll.checked;
+               });
+
+               if (checkAll.checked) {
+                   label.innerText = "Uncheck All Counties";
+               } else {
+                   label.innerText = "Check All Counties";
+               }
+           }
+
+    </script>
+    }
+<style>
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0,0,0,0.4);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .modal-content {
+        background-color: #fefefe;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 50%;
+        max-width: 600px; /* Adjust as needed */
+    }
+
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+  
+
+        .text-center {
+                text-align: center;
+
+    }
+
+
+
+</style>
+
+
+
+
+
+

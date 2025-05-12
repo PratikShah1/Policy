@@ -1,0 +1,18 @@
+﻿
+<!DOCTYPE html>
+<html>
+<head>
+	<title>CKEditor Integration</title>
+	<script src="https://cdn.ckeditor.com/4.16.2/standard/ckeditor.js"></script>
+</head>
+<body>
+	<form method="post" action="/Home/Save">
+		<textarea name="editor1"></textarea>
+		<button type="submit">Save</button>
+	</form>
+	<script>
+		CKEDITOR.replace('editor1');
+	</script>
+</body>
+</html>
+

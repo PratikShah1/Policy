@@ -1,0 +1,110 @@
+﻿@model PD_Access.Models.UserView
+
+<form asp-action="Save" asp-controller="Home" method="post">
+    <input type="hidden" id="ID" name="ID" value="@Model.Id" />
+    <div class="form-group row user-header">
+        <div class="col-sm-12 user-header-style">
+            <h3>User Info</h3>
+        </div>
+    </div>
+    <div class="form-group row">
+        <label for="FirstName" class="col-sm-3 col-form-label">Name</label>
+        <div class="col-sm-9">
+            <input type="text" class="form-control" id="FirstName" name="FirstName" value="@Model.FirstName" />
+        </div>
+    </div>
+    <div class="form-group row">
+        <label for="LastName" class="col-sm-3 col-form-label">Last Name</label>
+        <div class="col-sm-9">
+            <input type="text" class="form-control" id="LastName" name="LastName" value="@Model.LastName" />
+        </div>
+    </div>
+    <div class="form-group row">
+        <label for="Email" class="col-sm-3 col-form-label">Email</label>
+        <div class="col-sm-9">
+            <input type="email" class="form-control" id="Email" name="Email" value="@Model.Email" />
+        </div>
+    </div>
+
+
+
+    <div class="form-group row roles-header">
+        <div class="col-sm-12 user-header-style">
+            <h3>Roles</h3>
+        </div>
+    </div>
+
+
+    <div class="form-group row">
+
+        <div class="col-sm-6">
+            <input type="checkbox" id="role1" name="Roles[0].IsAssigned" value="true" @(Model.Roles.Any(r => r.role_id == 1 && r.IsAssigned) ? "checked" : "")>
+            <input type="hidden" name="Roles[0].role_id" value="1" />
+            <label for="role1">Owner</label>
+        </div>
+
+        <div class="col-sm-6">
+            <input type="checkbox" id="role2" name="Roles[1].IsAssigned" value="true" @(Model.Roles.Any(r => r.role_id == 2 && r.IsAssigned) ? "checked" : "")>
+            <input type="hidden" name="Roles[1].role_id" value="2" />
+            <label for="role2">Administrator</label>
+        </div>
+    </div>
+    <div class="form-group row">
+        <div class="col-sm-6">
+            <input type="checkbox" id="role3" name="Roles[2].IsAssigned" value="true" @(Model.Roles.Any(r => r.role_id == 3 && r.IsAssigned) ? "checked" : "")>
+            <input type="hidden" name="Roles[2].role_id" value="3" />
+            <label for="role3">Editor</label>
+        </div>
+        <div class="col-sm-6">
+            <input type="checkbox" id="role4" name="Roles[3].IsAssigned" value="true" @(Model.Roles.Any(r => r.role_id == 4 && r.IsAssigned) ? "checked" : "")>
+            <input type="hidden" name="Roles[3].role_id" value="4" />
+            <label for="role4">Read Only</label>
+        </div>
+
+    </div>
+
+
+    <div class="form-group row roles-header">
+        <div class="col-sm-12 user-header-style">
+            <h3>Counties</h3>
+        </div>
+    </div>
+
+
+    <div class="form-group row">
+        <div class="col-sm-12 text-left">
+            <input type="checkbox" id="checkAllCounties" onclick="toggleAllCounties()" />
+            <label for="checkAllCounties" id="checkAllLabel">Check All Counties</label>
+        </div>
+    </div>
+
+
+    @for (int i = 0; i < Model.Counties.Count; i += 3)
+    {
+        <div class="form-group row">
+            @for (int j = 0; j < 3; j++)
+            {
+                if (i + j < Model.Counties.Count)
+                {
+                    var county = Model.Counties[i + j];
+                    <div class="col-sm-4">
+                        <input type="checkbox" id="county@county.County_Id" name="Counties[@(i + j)].IsAssigned" value="true" @(county.IsAssigned ? "checked" : "")>
+                        <input type="hidden" name="Counties[@(i + j)].County_Id" value="@county.County_ID" />
+                        <label for="county@county.County_Id">@county.County_Name</label>
+                    </div>
+                }
+            }
+        </div>
+    }
+
+    <hr />
+
+    <!-- Add other fields as needed -->
+    <div class="form-group row">
+        <div class="col-sm-12 text-end">
+            <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+    </div>
+</form>
+
+

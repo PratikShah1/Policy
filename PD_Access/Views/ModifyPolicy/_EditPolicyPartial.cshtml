@@ -1,0 +1,230 @@
+﻿@model PD_Access.Models.ModifyPolicyModel
+<form id="saveForm" method="post" action="/ModifyPolicy/Save">
+    <div class="user-header">
+        <h1>@Model.PolicySectionTitle</h1>
+    </div>
+    <div>
+        <h2>@Model.PolicySectionName</h2>
+    </div>
+
+    <div class="section-number-header">
+        <h3>@Model.PolicySectionNumberName @Model.PolicySectionNameNumber</h3>
+    </div>
+    <div>
+        <div class="content-policy-text"> @Html.Raw(@Model.PolicyText)</div>
+    </div>
+</form>
+
+<div id="userCommentsContainer" style="margin-top: 20px;">
+    <h2>Modifications Requested</h2>
+    <div id="commentsSection"></div>
+</div>
+<div style="margin-top: 10px; max-width:400px;">
+    <select class="select-container-colored form-select" id="modifyDropdown">
+        <option value="0">What would you like to do</option>
+        <option value="1">Add Policy</option>
+        <option value="2">Delete Policy</option>
+        <option value="3">Modify Policy</option>
+    </select>
+</div>
+<div class="col-sm-12 header-style mt-4 mb-2" id="actionHeader1" style="display: none;">
+    <h4 id="actionHeaderText1">What Would You Like To Change?</h4>
+</div>
+<div id="editorContainer1" style="display: none;">
+    <textarea name="editor1"></textarea>
+</div>
+<div class="col-sm-12 header-style mt-4 mb-2" id="actionHeader2" style="display: none;">
+    <h4 id="actionHeaderText2">Please Provide reason Change?</h4>
+</div>
+<div id="editorContainer2" style="display: none;">
+    <textarea name="editor2"></textarea>
+</div>
+<div class="form-group row" id="saveButtonContainer" style="display: none;">
+    <div class="col-sm-12 mt-4 text-end">
+        <button type="button" class="btn btn-primary" onclick="submitForm(event)">Save</button>
+    </div>
+</div>
+<script>
+    CKEDITOR.replace('editor1', {});
+    CKEDITOR.replace('editor2', {});
+
+    var modifyDropdown = document.getElementById('modifyDropdown');
+    var actionHeader1 = document.getElementById('actionHeader1');
+    var actionHeaderText1 = document.getElementById('actionHeaderText1');
+    var editorContainer1 = document.getElementById('editorContainer1');
+    var actionHeader2 = document.getElementById('actionHeader2');
+    var actionHeaderText2 = document.getElementById('actionHeaderText2');
+    var editorContainer2 = document.getElementById('editorContainer2');
+    var saveButtonContainer = document.getElementById('saveButtonContainer');
+    var commentsSection = document.getElementById('commentsSection');
+    var policySectionNumberName = @Model.PolicySectionNumberName;
+    loadComments(policySectionNumberName);
+
+    modifyDropdown.addEventListener('change', function() {
+        var selectedValue = parseInt(modifyDropdown.value);
+        if (selectedValue > 0) {
+            actionHeader1.style.display = 'block';
+            editorContainer1.style.display = 'block';
+            actionHeader2.style.display = 'block';
+            editorContainer2.style.display = 'block';
+            saveButtonContainer.style.display = 'block';
+            switch (selectedValue) {
+                case 1:
+                    actionHeaderText1.innerText = 'What would you like to Add?';
+                    actionHeaderText2.innerText = 'Please Provide Valid Reason For Adding This Policy';
+                    break;
+                case 2:
+                    actionHeaderText1.innerText = 'What would you like to Delete?';
+                    actionHeaderText2.innerText = 'Please Provide Valid Reason For Deleting This Policy';
+                    break;
+                case 3:
+                    actionHeaderText1.innerText = 'What would you like to Modify?';
+                    actionHeaderText2.innerText = 'Please Provide Valid Reason For Modifying This Policy';
+                    break;
+            }
+        } else {
+            actionHeader1.style.display = 'none';
+            editorContainer1.style.display = 'none';
+            actionHeader2.style.display = 'none';
+            editorContainer2.style.display = 'none';
+            saveButtonContainer.style.display = 'none';
+        }
+    });
+
+    function validateEditors() {
+        var editor1Data = CKEDITOR.instances.editor1.getData();
+        var editor2Data = CKEDITOR.instances.editor2.getData();
+        if (!editor1Data.trim() || !editor2Data.trim()) {
+            alert('Both fields must be filled out.');
+            return false; // Prevent form submission
+        }
+        return true; // Allow form submission
+    }
+
+    function submitForm(event) {
+        event.preventDefault(); // Prevent default form submission
+        if (validateEditors()) {
+            var data = {
+                modify_what: CKEDITOR.instances.editor1.getData(),
+                modify_why: CKEDITOR.instances.editor2.getData(),
+                PolicySectionNumberName: @Model.PolicySectionNumberName,
+                modify_user_id: "Pratik Shah" ,
+                modify_value: parseInt(document.getElementById("modifyDropdown").value)
+            };
+
+            fetch('/ModifyPolicy/Save', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Information has been saved.');
+
+            // Reload comments to show the new one
+            loadComments('@Model.PolicySectionNumberName');
+
+            // Reset dropdown to default
+            modifyDropdown.value = "0";
+
+            // Hide all the dynamic fields
+            actionHeader1.style.display = 'none';
+            editorContainer1.style.display = 'none';
+            actionHeader2.style.display = 'none';
+            editorContainer2.style.display = 'none';
+            saveButtonContainer.style.display = 'none';
+
+            // Clear the editors
+            CKEDITOR.instances.editor1.setData('');
+            CKEDITOR.instances.editor2.setData('');
+
+        } else {
+            alert('Failed to save information: ' + data.message);
+        }
+    });
+
+        }
+    }
+
+    function loadComments(policySectionNumberName) {
+        fetch(`/ModifyPolicy/GetCommentsByPolicySectionNumberName?policySectionNumberName=${policySectionNumberName}`)
+            .then(response => response.json())
+            .then(data => {
+                const commentsSection = document.getElementById('commentsSection');
+                commentsSection.innerHTML = '';
+
+                if (data.length === 0) {
+                    commentsSection.innerHTML = '<p><em>No Modifications found for this section.</em></p>';
+                    return;
+                }
+
+                let lastUserId = null;
+                let isAlternate = false;
+                let groupContainer = null;
+
+                data.forEach((comment, index) => {
+                    const isNewUser = comment.modify_user_id !== lastUserId;
+
+                    if (isNewUser) {
+                        isAlternate = !isAlternate;
+                        lastUserId = comment.modify_user_id;
+
+                        // Create new user comment group
+                        groupContainer = document.createElement('div');
+                        groupContainer.style.backgroundColor = isAlternate ? '#f5f5f5' : '#f5f5f5';
+                        groupContainer.style.padding = '10px';
+                        groupContainer.style.marginBottom = '10px';
+                        groupContainer.style.border = '1px solid #ccc';
+                        groupContainer.style.borderRadius = '5px';
+
+                        // Collapsible header
+                        const header = document.createElement('div');
+                        header.style.cursor = 'pointer';
+                        header.style.fontWeight = 'bold';
+                        header.style.paddingBottom = '5px';
+                        header.textContent = `User: ${comment.modify_user_id}`;
+                        header.onclick = () => {
+                            const content = groupContainer.querySelector('.comment-content');
+                            content.style.display = content.style.display === 'none' ? 'block' : 'none';
+                        };
+
+                        // Comment container
+                        const contentContainer = document.createElement('div');
+                        contentContainer.className = 'comment-content';
+                        contentContainer.style.display = 'block';
+
+                        groupContainer.appendChild(header);
+                        groupContainer.appendChild(contentContainer);
+                        commentsSection.appendChild(groupContainer);
+                    }
+
+                    // Single comment block
+                    const commentDiv = document.createElement('div');
+                    commentDiv.style.padding = '10px';
+                    commentDiv.style.borderTop = '1px solid #aaa';
+                    commentDiv.innerHTML = `
+                        <p><strong>Action:</strong> ${comment.modify_action}</p>
+                        <p><strong>What:</strong> ${comment.modify_what}</p>
+                        <p><strong>Why:</strong> ${comment.modify_why}</p>
+                    `;
+
+                    groupContainer.querySelector('.comment-content').appendChild(commentDiv);
+                });
+            })
+            .catch(error => {
+                console.error('Error loading comments:', error);
+                const commentsSection = document.getElementById('commentsSection');
+                commentsSection.innerHTML = '<p style="color:red;"><em>Error loading comments.</em></p>';
+            });
+    }
+
+
+
+    document.addEventListener('DOMContentLoaded', function() {
+        var policySectionNumberName = @Model.PolicySectionNumberName;
+        loadComments(policySectionNumberName);
+    });
+</script>

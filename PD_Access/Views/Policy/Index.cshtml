@@ -1,0 +1,166 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Create Policy</title>
+    <link href="~/css/style.css" rel="stylesheet" />
+    <script src="https://cdn.ckeditor.com/4.16.2/standard/ckeditor.js"></script>
+
+</head>
+<body>
+    <div class="container">
+
+        @* <div class="container">
+             <div class="saved-content">
+                <h3>Saved Content:</h3>
+                <div class="content-display">
+                    @Html.Raw(Model.SavedContent) <!-- Display saved content as uneditable text -->
+                </div>
+            </div> *@
+
+        <form action="/Policy/Save" method="post">
+        <div class="dropdown-container">
+            <label for="sectionGroupDropdown">Section Group:</label> 
+            <select class= "select-container1" id="sectionGroupDropdown">
+                <option value="">Section GroupName</option>
+                @foreach (var item in Model.SectionGroupDropdownData)
+                {
+                    <option value="@item.Id">@item.SectionGroupName</option>
+                }
+            </select>
+
+            <label for="sectionNumberDropdown">Section Number:</label>
+                <select class="select-container2" id="sectionNumberDropdown">
+                <option value="">Section Number</option>
+                @foreach (var item in Model.SectionNumberDropdownData)
+                {
+                    <option value="@item.Id">@item.SectionNumber</option>
+                }
+            </select>
+
+            <label for="sectionTitleDropdown">Section Title:</label>
+                <select class="select-container3" id="sectionTitleDropdown">
+                <option value="">Section Title</option>
+                @foreach (var item in Model.SectionTitleDropdownData)
+                {
+                    <option value="@item.Id">@item.SectionTitle</option>
+                }
+            </select>
+        
+
+       </div>
+        <textarea name="editor1"></textarea>
+            <div style="text-align: center; margin-bottom: 10px;">
+                <button class="btn btn-primary" type="submit">Save</button>
+        </div>
+            
+        </form>
+        <script>
+            CKEDITOR.replace('editor1', {
+               
+            }); 
+        </script>
+    </div>
+
+</body>
+</html>
+<style>
+    .container {
+        display: flex;
+        flex-direction: column;
+       
+        width: 100%;
+    }
+
+    .dropdown-container {
+            display: flex;
+            /* flex-direction: column; */
+            align-items: flex-start;
+        margin-bottom: 20px;
+        
+    }
+    .select-container1{
+        margin-left: 58px;
+    }
+
+    .select-container2 {
+        margin-left: 46px;
+    }
+
+    .select-container3 {
+        margin-left: 71px;
+    }
+    .content-display {
+        padding: 10px;
+        border: 1px solid #ccc;
+        background-color: #f9f9f9;
+        
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        margin-bottom: 20px;
+        width: 100%;
+        max-width: 800px; /* Adjust as needed */
+    }
+
+        .form-group label {
+            
+            margin-right: 10px;
+        }
+
+        .form-group select {
+            flex-grow: 1;
+            max-width: 700px; /* Adjust as needed */
+        }
+
+        .form-group textarea {
+            width: 100%;
+            max-width: 800px; /* Adjust as needed */
+        }
+
+    button {
+        margin-top: 20px;
+    }
+
+    .dropdown {
+        margin-bottom: 20px;
+    }
+</style>
+
+@* <style>
+
+    .form-group {
+        display: flex;
+                flex-direction: row;
+                align-items: center;
+                margin-bottom: 20px;
+                width: 100%;
+                max-width: 800px;
+    }
+
+        .form-group label {
+                    width: 200px; /* Adjust as needed */
+                    margin-right: 10px;
+        }
+
+        .form-group select {
+                width: 100%;
+                max-width: 300px; /* Adjust as needed */
+
+    }
+
+        .container {
+                display: flex;
+                flex-direction: column;
+               
+                width: 100%;
+
+    }
+
+    .dropdown {
+        margin-bottom: 20px;
+    }
+</style>
+ *@
