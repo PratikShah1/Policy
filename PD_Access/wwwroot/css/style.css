@@ -71,7 +71,9 @@ table td, table th {
     padding: 20px;
     border: 1px solid #888;
     width: 50%;
-    max-width: 600px; /* Adjust as needed */
+    max-width: 700px !important; /* Adjust as needed */
+    height: calc(100vh - 180px);
+    overflow-y: auto;
 }
 
 
@@ -92,9 +94,23 @@ table td, table th {
         text-decoration: none;
         cursor: pointer;
     }
-
-#editFormContainer {
-    padding-top: 16px;
+.modal-content .header-style {
+    background: #005596;
+}
+    .modal-content .header-style h3{
+        color:#ffffff !important;
+    }
+    #editFormContainer {
+        padding-top: 16px;
+    }
+.user-submit{
+    position: sticky;
+    width: 100%;
+    left: 0;
+    padding: 8px;
+    bottom: -20px;
+    background: #fff;
+    margin-bottom: 0;
 }
 /* Responsive styles */
 @media (max-width: 768px) {
@@ -149,7 +165,7 @@ table td, table th {
     background-color: #fff;
     position: sticky;
     top: 71px;
-    z-index: 10;
+    z-index: 1;
     padding-bottom: 16px;
 }
 
@@ -160,6 +176,9 @@ table td, table th {
 
     .navbar ul li a, .navbar-brand {
         color: #ffffff !important;
+    }
+    .navbar .dropdown-menu li a {
+        color: #005596 !important;
     }
 
 
@@ -206,7 +225,7 @@ h4 {
     line-height: 24px;
     font-weight: 600;
 }
-
+.
 .content {
     margin-top: 65px;
 

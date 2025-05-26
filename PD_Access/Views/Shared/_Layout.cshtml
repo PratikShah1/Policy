@@ -54,10 +54,8 @@
                                     Hello, @User.FindFirst("name")?.Value
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="finalSubmit">
-                                    <li><a class="form-select form-select-sm" href="/ModifyPolicy/FinalSubmit">Final Submission</a></li>
-                                </ul>
-                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                                    <li><a class="form-select form-select-sm" href="/Login/SignOutApp">Logout</a></li>
+                                <li><a class="dropdown-item"  href="/ModifyPolicy/FinalSubmit">Final Submission</a></li>
+                                <li><a class="dropdown-item"  href="/Login/SignOutApp">Logout</a></li>
                                 </ul>
                             </li>
                             <li class="nav-item d-flex align-items-center">
@@ -76,7 +74,7 @@
     </header>
 
     <div class="container">
-        <main role="main" class="pb-3">
+        <main role="main" class="pb-3 w-100" style="padding-top:84px;">
             @RenderBody()
         </main>
     </div>
