@@ -22,9 +22,9 @@
 <div style="margin-top: 10px; max-width:400px;">
     <select class="select-container-colored form-select" id="modifyDropdown">
         <option value="0">What would you like to do</option>
-        <option value="1">Add Policy</option>
-        <option value="2">Delete Policy</option>
-        <option value="3">Modify Policy</option>
+        <option value="1">Add to Policy</option>
+        <option value="2">Delete from Policy</option>
+        <option value="3">Modify the Policy</option>
     </select>
 </div>
 <div class="col-sm-12 header-style mt-4 mb-2" id="actionHeader1" style="display: none;">
@@ -58,6 +58,7 @@
     var saveButtonContainer = document.getElementById('saveButtonContainer');
     var commentsSection = document.getElementById('commentsSection');
     var policySectionNumberName = @Model.PolicySectionNumberName;
+
     loadComments(policySectionNumberName);
 
     modifyDropdown.addEventListener('change', function() {
@@ -71,15 +72,15 @@
             switch (selectedValue) {
                 case 1:
                     actionHeaderText1.innerText = 'What would you like to Add?';
-                    actionHeaderText2.innerText = 'Please Provide Valid Reason For Adding This Policy';
+                    actionHeaderText2.innerText = 'Please Provide a Justification For Adding This Policy';
                     break;
                 case 2:
                     actionHeaderText1.innerText = 'What would you like to Delete?';
-                    actionHeaderText2.innerText = 'Please Provide Valid Reason For Deleting This Policy';
+                    actionHeaderText2.innerText = 'Please Provide a Justification For Deleting This Policy';
                     break;
                 case 3:
                     actionHeaderText1.innerText = 'What would you like to Modify?';
-                    actionHeaderText2.innerText = 'Please Provide Valid Reason For Modifying This Policy';
+                    actionHeaderText2.innerText = 'Please Provide a Justification For Modifying This Policy';
                     break;
             }
         } else {
@@ -107,8 +108,7 @@
             var data = {
                 modify_what: CKEDITOR.instances.editor1.getData(),
                 modify_why: CKEDITOR.instances.editor2.getData(),
-                PolicySectionNumberName: @Model.PolicySectionNumberName,
-                modify_user_id: "Pratik Shah" ,
+                PolicySectionNumberName : @Model.PolicySectionNumberName ,
                 modify_value: parseInt(document.getElementById("modifyDropdown").value)
             };
 

@@ -1,5 +1,4 @@
-﻿/* General styles for the data grid */
- 
+﻿﻿ /* General styles for the data grid */
 table {
     width: 100%;
     border-collapse: collapse;
@@ -10,35 +9,36 @@ table {
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
-    /* Header styles */
-    table thead th {
-        background-color: #005596;
-        color: #ffffff;
-        padding: 12px 15px;
-        text-transform: uppercase;
-        letter-spacing: 0.03em;
-        border: 1px solid #005596;
+/* Header styles */
+table thead th {
+    background-color: #005596;
+    color: #ffffff;
+    padding: 12px 15px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    border: 1px solid #005596;
+}
+
+/* Row styles */
+table tbody tr {
+    border-bottom: 1px solid #ddd;
+}
+
+    table tbody tr:nth-of-type(even) {
+        background-color: #0055960f; /* Light red tint */
     }
 
-    /* Row styles */
-    table tbody tr {
-        border-bottom: 1px solid #ddd;
+    table tbody tr:hover {
+        background-color: #0055960f; /* Soft coral hover effect */
     }
 
-        table tbody tr:nth-of-type(even) {
-            background-color: #0055960f; /* Light red tint */
-        }
+/* Cell styles */
+table td, table th {
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    text-align: center;
+}
 
-        table tbody tr:hover {
-            background-color: #0055960f; /* Soft coral hover effect */
-        }
-
-    /* Cell styles */
-    table td, table th {
-        padding: 12px 15px;
-        border: 1px solid #ddd;
-        text-align: center;
-    }
 .form-group.row {
     margin-bottom: 15px;
 }
@@ -92,8 +92,9 @@ table {
         text-decoration: none;
         cursor: pointer;
     }
-#editFormContainer{
-    padding-top:16px;
+
+#editFormContainer {
+    padding-top: 16px;
 }
 /* Responsive styles */
 @media (max-width: 768px) {
@@ -123,37 +124,43 @@ table {
 
 /* Dropdown styles */
 .styled-dropdown {
-        padding: 10px;
-        border-radius: 5px;
-        border: 1px solid #ccc;
-        background-color: #f9f9f9;
-        font-size: 16px;
-        width: 200px; /* Adjust width as needed */
-        margin-bottom: 20px; /* Add spacing between dropdown and CKEditor */
+   padding: 10px;
+   border-radius: 5px;
+   border: 1px solid #ccc;
+   background-color: #f9f9f9;
+   font-size: 16px;
+    width: 200px; 
+    margin-bottom: 20px; 
 }
 
 /* CKEditor container */
 .editor {
-        width: 90%;
-        flex-grow: 1; 
+    width: 90%;
+    flex-grow: 1;
 }
 
 /* Container styles */
 .container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        width: 100%;
-        height: 100vh;
+    display: flex;
+    max-width: 2200px;
+
+}
+.header {
+    background-color: #fff;
+    position: sticky;
+    top: 71px;
+    z-index: 10;
+    padding-bottom: 16px;
 }
 
 .navbar {
     background-color: #005596 !important;
-    z-index:10;
+    z-index: 10;
 }
-.navbar ul li a,.navbar-brand{
-    color:#ffffff !important;
-}
+
+    .navbar ul li a, .navbar-brand {
+        color: #ffffff !important;
+    }
 
 
 .btn-primary {
@@ -161,26 +168,31 @@ table {
     color: #ffffff !important;
     border-color: #005596 !important;
 }
-table tr td .edit-btn{
-    border:none;
-    background-color:transparent;
+
+table tr td .edit-btn {
+    border: none;
+    background-color: transparent;
 }
-table tr td .edit-btn img {
-    width: 20px;
-    height: 20px;
-    object-fit: contain;
-}
+
+    table tr td .edit-btn img {
+        width: 20px;
+        height: 20px;
+        object-fit: contain;
+    }
+
 h1 {
     font-size: 28px;
     line-height: 32px;
     font-weight: 600;
     color: #005596;
 }
+
 h2 {
     font-size: 24px;
     line-height: 28px;
     font-weight: 600;
 }
+
 h3 {
     font-size: 20px;
     line-height: 24px;
@@ -188,74 +200,90 @@ h3 {
     margin-bottom: 0;
     color: #005596;
 }
+
 h4 {
     font-size: 18px;
     line-height: 24px;
     font-weight: 600;
 }
-.content{
-    margin-top:60px;
+
+.content {
+    margin-top: 65px;
+
 }
+
 blockquote, font {
     font-family: Arial, sans-serif;
 }
+
 .section-number-header {
     display: flex;
     justify-content: space-between;
-    align-items:center;
+    align-items: center;
     background-color: #0055960f;
-    padding:8px 16px;
-    border-radius:5px;
+    padding: 8px 16px;
+    border-radius: 5px;
 }
-.like-count{
+
+.like-count {
     cursor: pointer;
     color: #000;
     text-decoration: none;
     font-weight: 600;
-    display:inline-block;
-    padding-top:3px;
+    display: inline-block;
+    padding-top: 3px;
 }
+
 .like-button {
-   padding:0;
-   border:none;
-   background-color:transparent;
-   transition: background-color 0.2s ease;
+    padding: 0;
+    border: none;
+    background-color: transparent;
+    transition: background-color 0.2s ease;
 }
-.like-button img{
-    width:20px;
+
+    .like-button img {
+        width: 30px;
+    }
+
+.content-policy-text {
+    padding: 16px;
+    max-width: 2200px;
 }
-.content-policy-text{
-    padding:16px;
-}
+
 .section-comments-wrapper {
     border: 1px solid #0055962e;
     border-radius: 5px;
     overflow: hidden;
     margin-bottom: 16px;
 }
+
 .section-comments-header {
     cursor: pointer;
     background-color: rgb(240 245 249);
     padding: 8px;
     font-weight: bold;
 }
+
 .section-comments {
     border-top: 1px solid #0055962e;
-    padding:16px;
+    padding: 16px;
 }
-p{
-    padding-bottom:4px;
-    margin-bottom:0;
+
+p {
+    padding-bottom: 4px;
+    margin-bottom: 0;
 }
+
 #editFormContainer .user-header-style {
     background-color: #005596;
     padding: 10px;
     border-radius: 5px;
     text-align: center;
 }
-#editFormContainer .user-header-style h3 {
-    font-size: 16px;
-    line-height: 22px;
-    font-weight: 400;
-    color: #fff;
-}
+
+    #editFormContainer .user-header-style h3 {
+        font-size: 16px;
+        line-height: 22px;
+        font-weight: 400;
+        color: #fff;
+    }

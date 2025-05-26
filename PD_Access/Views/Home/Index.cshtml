@@ -25,7 +25,7 @@
                 <td>@user.LastName</td>
                 <td>@user.Email</td>
                 <td>
-                    <button onclick="openEditPopup(@user.Id)" class="edit-btn" data-id="@user.Id"><img src="~/images/edit-icon.svg"/></button>
+                    <button onclick="openEditPopup(@user.Id)" class="edit-btn" data-id="@user.Id">Edit</button>
                 </td>
             </tr>
         }
@@ -108,6 +108,12 @@
         max-width: 600px; /* Adjust as needed */
     }
 
+    .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+    }
 
         .close:hover,
         .close:focus {
@@ -116,13 +122,27 @@
             cursor: pointer;
         }
 
-  
+    .roles-header {
+            font-weight: bold;
+            background-color: #f8f9fa; /* Light background color */
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+    }
 
         .text-center {
                 text-align: center;
 
     }
 
+        .header-style {
+                background-color: cornflowerblue;
+                color: white;
+                padding: 10px;
+                border-radius: 5px;
+                text-align: center;
+
+    }
 
 
 </style>

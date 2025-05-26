@@ -1,4 +1,5 @@
-﻿@model PD_Access.Models.ModifyPolicyModel.PolicyViewModel
+﻿@using Microsoft.AspNetCore.Http;
+@model PD_Access.Models.ModifyPolicyModel.PolicyViewModel
 
 @{
     var sections = ViewBag.Sections as List<PD_Access.Models.ModifyPolicyModel>;
@@ -10,39 +11,36 @@
     <script src="https://cdn.ckeditor.com/4.16.2/standard/ckeditor.js"></script>
     <style>
         body {
-            margin: 0;
-            font-family: Arial, sans-serif;
+
+        font-family: Arial, sans-serif;
+
         }
 
-        .header {
-            background-color:#fff;
-            position: sticky;
-            top: 56px;
-            z-index: 10;
-            padding-bottom:16px;    }
+
 
         .dropdown-container {
-            display: flex;
-            gap: 12px;
-            background-color: #f8f9fa;
-            padding: 16px;
-            border-radius:5px;        }
+        display: flex;
+        gap: 12px;
+        background-color: #f8f9fa;
+        padding: 16px;
+        border-radius: 5px;
+        }
 
         .dropdown-container .form-group {
-            width: calc(100%/3 - 8px)
+        width: calc(100%/3 - 8px)
         }
 
         #editPopup .modal-content {
-            width: 200vw; /* 80% of the viewport width */
-            max-width: 2000px; /* Optional: set a maximum width */
-            margin: auto; /* Center the modal content */
-            height: 750px;
-            overflow-y: auto;
-            margin-top: 250px;
+        width: 200vw; /* 80% of the viewport width */
+        max-width: 2000px; /* Optional: set a maximum width */
+        margin: auto; /* Center the modal content */
+        height: 750px;
+        overflow-y: auto;
+        margin-top: 250px;
         }
 
         #editPopup {
-            padding: 20px; /* Adjust padding as needed */
+        padding: 20px; /* Adjust padding as needed */
         }
     </style>
 </head>
@@ -52,17 +50,17 @@
             <div class="form-group">
                 <label for="sectionTitleDropdown">Section Title:</label>
                 <select class="select-container3 form-select" id="sectionTitleDropdown">
-                    <option value="">Section Title</option>
+                    <option value="">All</option>
                     @foreach (var item in Model.SectionTitleDropdownData)
                     {
-                        <option value="@item.section_number">@item.SectionTitle</option>
+                        <option value="@item.section_number">@item.section_number - @item.SectionTitle</option>
                     }
                 </select>
             </div>
             <div class="form-group">
                 <label for="sectionGroupDropdown">Section Group:</label>
                 <select class="select-container1 form-select" id="sectionGroupDropdown">
-                    <option value="">Section GroupName</option>
+                    <option value="">All</option>
                     @foreach (var item in Model.SectionGroupDropdownData)
                     {
                         <option value="@item.Id">@item.SectionGroupName</option>
@@ -72,7 +70,7 @@
             <div class="form-group">
                 <label for="sectionNumberDropdown">Section Number:</label>
                 <select class="select-container2 form-select" id="sectionNumberDropdown">
-                    <option value="">Section Number</option>
+                    <option value="">All</option>
                     @foreach (var item in Model.SectionNumberDropdownData)
                     {
                         <option value="@item.Id">@item.section_number - @item.section_name</option>
@@ -81,47 +79,100 @@
             </div>
         </div>
     </div>
-
     <div class="content" id="test">
         @foreach (var group in groupedSections)
         {
             <h1>@group.Key</h1>
             var subGroups = group.GroupBy(g => g.PolicySectionName).ToList();
-            @foreach (var subGroup in subGroups)
+            var readOnly = Context.Session.GetString("ReadOnly");
+            bool disableLikeButton = false;
+
+            foreach (var subGroup in subGroups)
             {
-                <div>
+                if (@subGroup.Key != "Mission" && @subGroup.Key != "Preamble")
+                {
                     <h2>@subGroup.Key</h2>
-                    @foreach (var sec in subGroup)
-                    {
-                        <div>
-                            <div class="section-number-header">
+                }
+
+                foreach (var sec in subGroup)
+                {
+                    if (@subGroup.Key != "Mission" && @subGroup.Key != "Preamble")
+                    { 
+                    <div class="section-number-header">
                                 <h3>@sec.PolicySectionNumberName @sec.PolicySectionNameNumber</h3>
-                                <div class="d-flex gap-2 align-items-center">
-                                    <button data-id="@sec.PolicySectionNumberName" class="btn btn-primary" onclick="openEditPopup(@sec.PolicySectionNumberName)">Modify</button>
-                                    <button class="like-button" data-id="@sec.PolicySectionNumberName" onclick="toggleLike(this)"><img src="~/images/like-light.png" alt="Like" class="like-icon"></button>
+                                @if (Context.Session.GetString("GroupNames") == null || Context.Session.GetString("ReadOnly") == "true")
+                                {
+                                    //disableModifyButton = true;
+                                    <button data-id="@sec.PolicySectionNumberName" class="btn btn-primary"  style="margin-left:auto;padding-top:14px;padding-bottom:14px;visibility:hidden" ) onclick="openEditPopup(@sec.PolicySectionNumberName)">Modify</button>
+
+                                }
+                                else
+                                {
+                                    <button data-id="@sec.PolicySectionNumberName" class="btn btn-primary" style="margin-left:auto;padding-top:14px;padding-bottom:14px") onclick="openEditPopup(@sec.PolicySectionNumberName)">Modify</button>
+
+                                }
+                                @if (Context.Session.GetString("ReadOnly") == "true"){
+                                    disableLikeButton = Convert.ToBoolean(readOnly);
+                                }
+                                <button class="like-button" data-id="@sec.PolicySectionNumberName" style="margin-left:10px;" onclick="toggleLike(this)" @(disableLikeButton ? "disabled" : "")><img src="~/images/like-light.png" alt="Like" class="like-icon"></button>
+                                @if (Context.Session.GetString("PublicPolicy") == "true" || Context.Session.GetString("ReadOnly") == "true")
+                                {
                                     <a href="javascript:void(0);" class="like-count" id="like-count-@sec.PolicySectionNumberName" onclick="event.stopPropagation(); showLikers(@sec.PolicySectionNumberName)">0</a>
-                                </div>
+
+                                }
+                                else
+                                {
+                                    <a href="javascript:void(0);" class="like-count"style="visibility:hidden" id="like-count-@sec.PolicySectionNumberName" onclick="event.stopPropagation(); showLikers(@sec.PolicySectionNumberName)">0</a>
+
+                                }
 
                             </div>
+                            }
                             <div>
                                 <div class="content-policy-text"> @Html.Raw(@sec.PolicyText)</div>
                             </div>
-                            <div class="section-comments-wrapper" id="comments-wrapper-@sec.PolicySectionNumberName">
+                    if (@subGroup.Key != "Mission" && @subGroup.Key != "Preamble")
+                    {
+                        <div class="section-comments-wrapper SelectChangecontent" style="margin-left: 20px; margin-bottom: 20px;" id="comments-wrapper-@sec.PolicySectionNumberName">
 
-                                <div class="section-comments-header" onclick="toggleSectionComments(@sec.PolicySectionNumberName)">
-                                    💬 Modifications (click to expand)
-                                </div>
-                                <div class="section-comments" id="comments-@sec.PolicySectionNumberName" style="display: none;">
-                                    <em>Loading modifications...</em>
-                                </div>
-                            </div>
+
+                                @{
+                                    var commentCount = sec.Comments?.Count ?? 0;
+                                    var commentHeaderText = commentCount > 0
+                                    ? $"💬 Modifications (click to expand  -- {commentCount} Modifications)"
+                                    : "💬 No Modifications";
+                                }
+
+
+                        <div class="section-comments-header" onclick="toggleSectionComments(@sec.PolicySectionNumberName)">
+                            @commentHeaderText
                         </div>
-                    }
-                </div>
-            }
-        }
-    </div>
 
+                                <div class="section-comments" id="comments-@sec.PolicySectionNumberName" style="display: none; margin-left: 20px;">
+                                    @if (sec.Comments != null && sec.Comments.Any())
+                                    {
+                                        foreach (var comment in sec.Comments)
+                                        {
+                                            <div style="margin-bottom: 10px;">
+                                                <strong>@comment.modify_user_id</strong> - <em>@comment.modify_action</em><br />
+                                                <strong>What:</strong> @comment.modify_what<br />
+                                                <strong>Why:</strong> @comment.modify_why
+                                            </div>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <em>No comments found for this section.</em>
+                                    }
+                                </div>
+
+                        </div>
+                        }
+                        }
+                    }
+                }
+            </div>
+		
     <div id="editPopup" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeEditPopup()">×</span>
@@ -141,15 +192,23 @@
             var sectionTitleDropdown = document.getElementById('sectionTitleDropdown');
             var sectionGroupDropdown = document.getElementById('sectionGroupDropdown');
             var sectionNumberDropdown = document.getElementById('sectionNumberDropdown');
+            const isReadOnly = '@Context.Session.GetString("ReadOnly")';
+           const isPublicPolicy = '@Context.Session.GetString("PublicPolicy")';
+
+        const showLikeCount = isReadOnly || isPublicPolicy;
+
             var policyContent = document.getElementById('test');
+           
             let currentlyEditingSection = null;
              $('#editPopup').hide();
             sectionGroupDropdown.disabled = true;
             sectionNumberDropdown.disabled = true;
 
-        const currentUserId = "Pratik Shah";
-
-        fetch(`/ModifyPolicy/GetLikedSections?userId=${encodeURIComponent(currentUserId)}`)
+        const currentUserId = '@Context.Session.GetString("UserDisplayName")';
+        GetLikes();
+        GetLikeCounts();
+        function GetLikes(){
+                    fetch(`/ModifyPolicy/GetLikedSections?userId=${encodeURIComponent(currentUserId)}`)
             .then(response => response.json())
             .then(likedIds => {
                 likedIds.forEach(id => {
@@ -160,17 +219,20 @@
                     }
                 });
             });
-         fetch('/ModifyPolicy/GetLikeCounts')
-        .then(response => response.json())
-        .then(counts => {
-            for (const sectionId in counts) {
-                const span = document.getElementById(`like-count-${sectionId}`);
-                if (span) {
-                    span.textContent = counts[sectionId];
-                }
-            }
-        });
+        }
 
+
+        //  fetch('/ModifyPolicy/GetLikeCounts')
+        // .then(response => response.json())
+        // .then(counts => {
+        //     for (const sectionId in counts) {
+        //         const span = document.getElementById(`like-count-${sectionId}`);
+        //         if (span) {
+        //             span.textContent = counts[sectionId];
+        //         }
+        //     }
+        // });
+          
         function GetLikeCounts(){
                      fetch('/ModifyPolicy/GetLikeCounts')
         .then(response => response.json())
@@ -190,18 +252,25 @@
                 if (sectionTitleDropdown.value == ''){
                     updateSections(-1);
                 }
-                if (selectedTitleId && selectedTitleId !== "") {
+                if (selectedTitleId !== "") {
                     sectionGroupDropdown.disabled = false;
                     sectionNumberDropdown.disabled = true;
-                    sectionNumberDropdown.innerHTML = '<option value="">Section Group Number and Name</option>';
+                    sectionNumberDropdown.innerHTML = '<option value="">All</option>';
                     fetchSectionGroupDropdownData(selectedTitleId);
                     updateSections(selectedTitleId); // Call the function to update sections
-                } else {
+                    if (selectedTitleId == "0" || selectedTitleId == "1")
+                    {
+                        sectionGroupDropdown.disabled = true;
+                        sectionNumberDropdown.disabled = true;
+                    }
+                } 
+                else {
                     sectionGroupDropdown.disabled = true;
                     sectionNumberDropdown.disabled = true;
-                    sectionGroupDropdown.innerHTML = '<option value="">Section Group</option>';
-                    sectionNumberDropdown.innerHTML = '<option value="">Section Group Number and Name</option>';
+                    sectionGroupDropdown.innerHTML = '<option value="">All</option>';
+                    sectionNumberDropdown.innerHTML = '<option value="">All</option>';
                     policyContent.innerHTML = ''; // Clear the content
+
                 }
             });
 
@@ -216,14 +285,14 @@
                      updateSections1(selectedGroupId); // Call the function to update sections
                 } else {
                     sectionNumberDropdown.disabled = true;
-                    sectionNumberDropdown.innerHTML = '<option value="">Section Group Number and Name</option>';
+                    sectionNumberDropdown.innerHTML = '<option value="">All</option>';
                     policyContent.innerHTML = ''; // Clear the content
                 }
             });
 
             sectionNumberDropdown.addEventListener('change', function () {
                 var selectedNumber = parseInt(sectionNumberDropdown.value);
-
+ 
 
                 if (sectionNumberDropdown.value == ''){
                     updateSections1(sectionGroupDropdown.value);
@@ -231,7 +300,7 @@
                 else if (sectionNumberDropdown && sectionNumberDropdown !== "") {
                     updateSections2(selectedNumber); // Call the function to update sections
                 } else {
-
+                    
                    policyContent.innerHTML = ''; // Clear the content
                 }
             });
@@ -245,7 +314,7 @@
                 })
                 .then(response => response.json())
                 .then(data => {
-                    sectionGroupDropdown.innerHTML = '<option value="">Section Group</option>';
+                    sectionGroupDropdown.innerHTML = '<option value="">All</option>';
                     data.forEach(item => {
                         var option = document.createElement('option');
                         option.value = item.id;
@@ -264,7 +333,7 @@
                 })
                 .then(response => response.json())
                 .then(data => {
-                    sectionNumberDropdown.innerHTML = '<option value="">Section Group Number and Name</option>';
+                    sectionNumberDropdown.innerHTML = '<option value="">All</option>';
                     data.forEach(item => {
                         var option = document.createElement('option');
                         option.value = item.section_number;
@@ -276,6 +345,7 @@
 
             function updateSections(sectionTitleId) {
                 var formData = new FormData();
+                 
                 formData.append('sectionTitleId', sectionTitleId);
                 fetch('/ModifyPolicy/GetSectionsByTitle', {
                     method: 'POST',
@@ -292,54 +362,79 @@
                         var subGroups = groupBy(group.items, 'policySectionName');
                         subGroups.forEach(subGroup => {
                             var subGroupDiv = document.createElement('div');
-                            subGroupDiv.innerHTML = `<h2>${subGroup.key}</h2>`;
+                            if (subGroup.key != "Mission" && subGroup.key != "Preamble"){
+                                subGroupDiv.innerHTML = `<h2>${subGroup.key}</h2>`;
+                            }
+
                             subGroup.items.forEach(sec => {
                                 var sectionDiv = document.createElement('div');
-                               
-                                
-                                sectionDiv.innerHTML = `
-                                    <div class="section-number-header">
+                                 if (subGroup.key != "Mission" && subGroup.key != "Preamble")
+                                 {
                                    
-                                     <h3>${sec.policySectionNumberName} ${sec.policySectionNameNumber}</h3>
-                                    <div class="d-flex gap-2 align-items-center">
-                                    
-                                    <button id="${sec.policySectionNumberName}" class="btn btn-primary" onclick="openEditPopup('${sec.policySectionNumberName}')">Modify</button>
-                                    <button data-id="${sec.policySectionNumberName}"  class="like-button" onclick="toggleLike(this)"><img src="/images/like-light.png" alt="Like" class="like-icon"></button>
-                                    <a href="javascript:void(0);"class="like-count" id="like-count-${sec.policySectionNumberName}" onclick="event.stopPropagation(); showLikers(${sec.policySectionNumberName})">0</a>
-                                    </div>
-                                      </div>
+                                   sectionDiv.innerHTML = `
+                                        <div class="section-number-header">
+                                            <h3>${sec.policySectionNumberName} ${sec.policySectionNameNumber}</h3>
+                                        <div class="d-flex gap-2 align-items-center">
+
+
+                                        ${!isReadOnly ? `
+                                             <button id="${sec.policySectionNumberName}" style="margin-left: auto;padding-top:14px;padding-bottom:14px" class="btn btn-primary" onclick="openEditPopup('${sec.policySectionNumberName}')">Modify</button>
+                                         ` : `
+                                             <div style="width: 120px;"></div> <!-- placeholder to preserve layout -->
+                                         `}
+                                        <button data-id="${sec.policySectionNumberName}" class="like-button" onclick="toggleLike(this)" ${isReadOnly ? 'disabled' : ''}><img src="/images/like-light.png" alt="Like" class="like-icon"> </button>
+
+                                    ${showLikeCount ? `
+                                            <a href="javascript:void(0);" class="like-count" id="like-count-${sec.policySectionNumberName}" onclick="event.stopPropagation(); showLikers(${sec.policySectionNumberName})">0</a>
+                                        ` : ''}                                    </div>
+                                        </div>
                                     `;
-                                GetLikeCounts();
+                                     GetLikes();
+                                    GetLikeCounts();
+                                 }
+
                                 var policyTextDiv = document.createElement('div');
-                                 policyTextDiv.className = "content-policy-text";
+                                policyTextDiv.className = "content-policy-text";
                                 policyTextDiv.innerHTML = `${sec.policyText}`;
                                 //
+
         // Section comment wrapper
         var commentsWrapper = document.createElement('div');
         commentsWrapper.className = "section-comments-wrapper SelectChangecontent";
-       
         commentsWrapper.id = `comments-wrapper-${sec.policySectionNumberName}`;
 
         // Section comment header
         var commentsHeader = document.createElement('div');
+        const commentCount = sec.comments?.length || 0;
+
         commentsHeader.className = "section-comments-header";
-        commentsHeader.textContent = '💬 Comments (click to expand)';
+        commentsHeader.textContent = commentCount > 0
+                    ? `💬 Modifications (click to collapse -- ${commentCount} modifications)`
+                    : '💬 No Modifications';
+        loadSectionComments(sec.policySectionNumberName);
+
         commentsHeader.onclick = function () {
             const commentDiv = document.getElementById(`comments-${sec.policySectionNumberName}`);
             const isVisible = commentDiv.style.display === 'block';
+           
 
             if (!isVisible) {
                 commentDiv.style.display = 'block';
-                commentsHeader.textContent = '💬 Comments (click to collapse)';
-                if (commentDiv.innerHTML.trim() === '' || commentDiv.innerHTML.includes('Loading') || commentDiv.innerHTML.includes('Error')) {
-                    commentDiv.innerHTML = '<em>Loading comments...</em>';
-                    loadSectionComments(sec.policySectionNumberName);
+                if (commentDiv.innerHTML.trim() === '' ||
+                    commentDiv.innerHTML.includes('Loading') ||
+                    commentDiv.innerHTML.includes('Error')) {
+                    commentDiv.innerHTML = '<em>Loading Modifications...</em>';
+                setTimeout(() => {loadSectionComments(sec.policySectionNumberName);}, 0);
                 }
             } else {
                 commentDiv.style.display = 'none';
-                commentsHeader.textContent = '💬 Modifications (click to expand)';
+                setTimeout(() => {loadSectionComments(sec.policySectionNumberName);}, 0);
+                commentsHeader.textContent = commentCount > 0
+                    ? `💬 Modifications (${commentCount} - click to expand)`
+                    : '💬 No Modifications';
             }
         };
+
 
         // Section comment content (collapsed by default)
         var commentsContent = document.createElement('div');
@@ -355,16 +450,14 @@
         // Add to DOM
         subGroupDiv.appendChild(sectionDiv);
         subGroupDiv.appendChild(policyTextDiv);
-        subGroupDiv.appendChild(commentsWrapper);
+         if (subGroup.key != "Mission" && subGroup.key != "Preamble")
+           {
+            subGroupDiv.appendChild(commentsWrapper);
+           }
+        // Call comment loading function
+    
 
-
-                                // Call comment loading function
-                                loadSectionComments(sec.policySectionNumberName);
-
-                                //
-
-                                // subGroupDiv.appendChild(sectionDiv);
-                                // subGroupDiv.appendChild(policyTextDiv);
+        setTimeout(() => {loadSectionComments(sec.policySectionNumberName);}, 0);
                             });
                             groupDiv.appendChild(subGroupDiv);
                         });
@@ -393,50 +486,73 @@
                             subGroupDiv.innerHTML = `<h2>${subGroup.key}</h2>`;
                             subGroup.items.forEach(sec => {
                                 var sectionDiv = document.createElement('div');
-                     
+                                
+                                
                                 sectionDiv.innerHTML = `
                                     <div  class="section-number-header">
                                         <h3>${sec.policySectionNumberName} ${sec.policySectionNameNumber}</h3>
-                                    
-                                    <div class="d-flex align-items-center gap-2">
+                                   <div class="d-flex gap-2 align-items-center">
+        
+                                    ${!isReadOnly ? `
+                                         <button id="${sec.policySectionNumberName}" style="margin-left: auto;padding-top:14px;padding-bottom:14px" class="btn btn-primary" onclick="openEditPopup('${sec.policySectionNumberName}')">Modify</button>
+                                     ` : `
+                                         <div style="width: 120px;"></div> <!-- placeholder to preserve layout -->
+                                     `}
 
-                                   
-                                    <button id="${sec.policySectionNumberName}" class="btn btn-primary" onclick="openEditPopup('${sec.policySectionNumberName}')">Modify</button>
-                                    <button data-id="${sec.policySectionNumberName}"   class="like-button" onclick="toggleLike(this)"><img src="/images/like-light.png" alt="Like" class="like-icon"></button>
-                                    <a href="javascript:void(0);"class="like-count" id="like-count-${sec.policySectionNumberName}" onclick="event.stopPropagation(); showLikers(${sec.policySectionNumberName})">0</a>
-                                     </div>
-                                     </div>
-                                    `;
+
+                                <button data-id="${sec.policySectionNumberName}" class="like-button" onclick="toggleLike(this)" ${isReadOnly ? 'disabled' : ''}>
+                                    <img src="/images/like-light.png" alt="Like" class="like-icon">
+                                </button>
+
+                                ${showLikeCount ? `
+                                        <a href="javascript:void(0);" class="like-count" id="like-count-${sec.policySectionNumberName}" onclick="event.stopPropagation(); showLikers(${sec.policySectionNumberName})">0</a>
+                                    ` : ''}
+
+                                </div>
+                                </div>
+                            `;
+                                 GetLikes();
                                  GetLikeCounts();
                                 var policyTextDiv = document.createElement('div');
-                                 policyTextDiv.className = "content-policy-text";
+                                policyTextDiv.className = "content-policy-text";
                                 policyTextDiv.innerHTML = `${sec.policyText}`;
                                                                 //
         // Section comment wrapper
         var commentsWrapper = document.createElement('div');
-        commentsWrapper.className = "section-comments-wrapper";
+        commentsWrapper.className = "section-comments-wrapper SelectChangecontent";
         commentsWrapper.id = `comments-wrapper-${sec.policySectionNumberName}`;
 
         // Section comment header
         var commentsHeader = document.createElement('div');
+        const commentCount = sec.comments?.length || 0;
+
         commentsHeader.className = "section-comments-header";
-        commentsHeader.textContent = '💬 Comments (click to expand)';
+        commentsHeader.textContent = commentCount > 0
+                    ? `💬 Modifications (${commentCount} - click to collapse)`
+                    : '💬 No Modifications';
+        loadSectionComments(sec.policySectionNumberName);
         commentsHeader.onclick = function () {
             const commentDiv = document.getElementById(`comments-${sec.policySectionNumberName}`);
             const isVisible = commentDiv.style.display === 'block';
 
+
             if (!isVisible) {
                 commentDiv.style.display = 'block';
-                commentsHeader.textContent = '💬 Comments (click to collapse)';
-                if (commentDiv.innerHTML.trim() === '' || commentDiv.innerHTML.includes('Loading') || commentDiv.innerHTML.includes('Error')) {
-                    commentDiv.innerHTML = '<em>Loading comments...</em>';
-                    loadSectionComments(sec.policySectionNumberName);
+             if (commentDiv.innerHTML.trim() === '' ||
+                    commentDiv.innerHTML.includes('Loading') ||
+                    commentDiv.innerHTML.includes('Error')) {
+                    commentDiv.innerHTML = '<em>Loading Modifications...</em>';
+           setTimeout(() => {loadSectionComments(sec.policySectionNumberName);}, 0);
                 }
             } else {
                 commentDiv.style.display = 'none';
-                commentsHeader.textContent = '💬 Modifications (click to expand)';
+                setTimeout(() => {loadSectionComments(sec.policySectionNumberName);}, 0);
+                commentsHeader.textContent = commentCount > 0
+                    ? `💬 Modifications (${commentCount} - click to expand)`
+                    : '💬 No Modifications';
             }
         };
+
 
         // Section comment content (collapsed by default)
         var commentsContent = document.createElement('div');
@@ -453,10 +569,8 @@
         subGroupDiv.appendChild(sectionDiv);
         subGroupDiv.appendChild(policyTextDiv);
         subGroupDiv.appendChild(commentsWrapper);
-
-
-                                // Call comment loading function
-                                loadSectionComments(sec.policySectionNumberName);
+        // Call comment loading function
+        setTimeout(() => {loadSectionComments(sec.policySectionNumberName);}, 0);
 
                                 //
                                 // subGroupDiv.appendChild(sectionDiv);
@@ -468,7 +582,7 @@
                     });
                 });
             }
-             function updateSections2(selectedNumber) {
+        function updateSections2(selectedNumber) {
                 var formData = new FormData();
                 formData.append('selectedNumber', selectedNumber);
                 fetch('/ModifyPolicy/GetSectionsByNumber', {
@@ -477,8 +591,8 @@
                 })
                 .then(response => response.json())
 
-        .then(data => {
-                    policyContent.innerHTML = ''; // Clear the existing content
+            .then(data => {
+                        policyContent.innerHTML = ''; // Clear the existing content
                     var groupedSections = groupBy(data, 'policySectionTitle');
                     groupedSections.forEach(group => {
                         var groupDiv = document.createElement('div');
@@ -486,21 +600,29 @@
                         var subGroups = groupBy(group.items, 'policySectionName');
                         subGroups.forEach(subGroup => {
                             var subGroupDiv = document.createElement('div');
-                            subGroupDiv.innerHTML = `<h2 >${subGroup.key}</h2>`;
+                            subGroupDiv.innerHTML = `<h2>${subGroup.key}</h2>`;
                             subGroup.items.forEach(sec => {
                                 var sectionDiv = document.createElement('div');
-                                
-                                sectionDiv.className = "SelectChangecontent";
+
+
                                 sectionDiv.innerHTML = `
                                     <div class="section-number-header">
                                         <h3>${sec.policySectionNumberName} ${sec.policySectionNameNumber}</h3>
-                                    <div class="d-flex gap-2 align-items-center">
-                                    <button id="${sec.policySectionNumberName}" class="btn btn-primary" onclick="openEditPopup('${sec.policySectionNumberName}')">Modify</button>
-                                    <button data-id="${sec.policySectionNumberName}" class="like-button" onclick="toggleLike(this)"><img src="/images/like-light.png" alt="Like" class="like-icon"></button>
-                                    <a href="javascript:void(0);"class="like-count" id="like-count-${sec.policySectionNumberName}" onclick="event.stopPropagation(); showLikers(${sec.policySectionNumberName})">0</a>
-                                </div>
-                                </div>
-                                    `;
+                                     <div class="d-flex gap-2 align-items-center">
+
+                                    ${!isReadOnly ? `
+                                         <button id="${sec.policySectionNumberName}" style="margin-left: auto;padding-top:14px;padding-bottom:14px" class="btn btn-primary" onclick="openEditPopup('${sec.policySectionNumberName}')">Modify</button>
+                                     ` : `
+                                         <div style="width: 120px;"></div> <!-- placeholder to preserve layout -->
+                                     `}
+                                    <button data-id="${sec.policySectionNumberName}" class="like-button" onclick="toggleLike(this)" ${isReadOnly ? 'disabled' : ''}>
+                                        <img src="/images/like-light.png" alt="Like" class="like-icon">
+                                    </button>
+                                ${showLikeCount ? `
+                                        <a href="javascript:void(0);" class="like-count" id="like-count-${sec.policySectionNumberName}" onclick="event.stopPropagation(); showLikers(${sec.policySectionNumberName})">0</a>
+                                    ` : ''}                                    </div></div>
+                                `;
+                                 GetLikes();
                                  GetLikeCounts();
                                 var policyTextDiv = document.createElement('div');
                                 policyTextDiv.className = "content-policy-text";
@@ -508,30 +630,41 @@
 
         // Section comment wrapper
         var commentsWrapper = document.createElement('div');
-        commentsWrapper.className = "section-comments-wrapper";
+        commentsWrapper.className = "section-comments-wrapper SelectChangecontent";
+
         commentsWrapper.id = `comments-wrapper-${sec.policySectionNumberName}`;
 
         // Section comment header
         var commentsHeader = document.createElement('div');
+        const commentCount = sec.comments?.length || 0;
         commentsHeader.className = "section-comments-header";
-        commentsHeader.style = "cursor: pointer; background-color:#f0f5f9; padding: 8px; border: 1px solid #ccc; border-radius: 5px; font-weight: bold;";
-        commentsHeader.textContent = '💬 Comments (click to expand)';
+
+        commentsHeader.textContent = commentCount > 0
+                    ? `💬 Modifications (${commentCount} - click to collapse)`
+                    : '💬 No Modifications';
+        loadSectionComments(sec.policySectionNumberName);
         commentsHeader.onclick = function () {
             const commentDiv = document.getElementById(`comments-${sec.policySectionNumberName}`);
             const isVisible = commentDiv.style.display === 'block';
 
+
             if (!isVisible) {
                 commentDiv.style.display = 'block';
-                commentsHeader.textContent = '💬 Comments (click to collapse)';
-                if (commentDiv.innerHTML.trim() === '' || commentDiv.innerHTML.includes('Loading') || commentDiv.innerHTML.includes('Error')) {
-                    commentDiv.innerHTML = '<em>Loading comments...</em>';
-                    loadSectionComments(sec.policySectionNumberName);
+                if (commentDiv.innerHTML.trim() === '' ||
+                    commentDiv.innerHTML.includes('Loading') ||
+                    commentDiv.innerHTML.includes('Error')) {
+                    commentDiv.innerHTML = '<em>Loading Modifications...</em>';
+                    setTimeout(() => {loadSectionComments(sec.policySectionNumberName);}, 0);
                 }
             } else {
                 commentDiv.style.display = 'none';
-                commentsHeader.textContent = '💬 Modifications (click to expand)';
+                setTimeout(() => {loadSectionComments(sec.policySectionNumberName);}, 0);
+                commentsHeader.textContent = commentCount > 0
+                    ? `💬 Modifications (${commentCount} - click to expand)`
+                    : '💬 No Modifications';
             }
         };
+
 
         // Section comment content (collapsed by default)
         var commentsContent = document.createElement('div');
@@ -548,14 +681,9 @@
         subGroupDiv.appendChild(sectionDiv);
         subGroupDiv.appendChild(policyTextDiv);
         subGroupDiv.appendChild(commentsWrapper);
+        // Call comment loading function
+        setTimeout(() => {loadSectionComments(sec.policySectionNumberName);}, 0);
 
-
-                                // Call comment loading function
-                                loadSectionComments(sec.policySectionNumberName);
-
-                                //
-                                // subGroupDiv.appendChild(sectionDiv);
-                                // subGroupDiv.appendChild(policyTextDiv);
                             });
                             groupDiv.appendChild(subGroupDiv);
                         });
@@ -563,7 +691,7 @@
                     });
                 });
             }
-
+       
 
 
 
@@ -578,7 +706,7 @@
             const id = div.id.replace('comments-', '');
             loadSectionComments(id);
         });
-
+      
 
         });
 
@@ -602,13 +730,22 @@
         }
         }
         function loadSectionComments(policySectionNumberName) {
+
         const container = document.getElementById(`comments-${policySectionNumberName}`);
-        if (!container) {
+        const selectedCounty = document.getElementById("countyDropdown")?.value;
+        const isReadOnly = '@Context.Session.GetString("ReadOnly")' === 'true';
+        const isPublicPolicy = '@Context.Session.GetString("PublicPolicy")' === 'true';
+
+         if (!container) {
             console.warn(`Comment container not found for section ID: ${policySectionNumberName}`);
             return;
         }
 
-        container.innerHTML = '<p><em>Loading comments...</em></p>';
+            container.innerHTML = '<p><em>Loading comments...</em></p>';
+
+            const url = `/ModifyPolicy/GetCommentsByPolicySectionNumberName?policySectionNumberName=${policySectionNumberName}` +
+                        (selectedCounty ? `&county=${encodeURIComponent(selectedCounty)}` : '');
+
 
             fetch(`/ModifyPolicy/GetCommentsByPolicySectionNumberName?policySectionNumberName=${policySectionNumberName}`)
                 .then(response => response.json())
@@ -623,6 +760,8 @@
                     let lastUserId = null;
                     let isAlternate = false;
                     let groupContainer = null;
+                    let deleteButtonHTML = '';
+                    if (!isReadOnly && !isPublicPolicy) {deleteButtonHTML = `<button onclick="deleteComment('${comment.id}', '${policySectionNumberName}')">Delete</button>`;}
 
                     data.forEach((comment, index) => {
                         const isNewUser = comment.modify_user_id !== lastUserId;
@@ -643,7 +782,7 @@
                             const header = document.createElement('div');
                             header.style.cursor = 'pointer';
                             header.style.fontWeight = 'bold';
-                            
+                            header.style.paddingBottom = '5px';
                             header.textContent = `User: ${comment.modify_user_id}`;
                             const content = groupContainer.querySelector('.comment-content');
                             // const isVisible = content.style.display === 'block';
@@ -668,29 +807,60 @@
                         commentDiv.style.borderTop = '1px solid #aaa';
                         commentDiv.style.marginTop = "10px";
                         commentDiv.innerHTML = `
-                            <p><strong>Action:</strong> ${comment.modify_action}</p>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <p style="margin: 0;"><strong>Action:</strong> ${comment.modify_action}</p>
+                            ${deleteButtonHTML}
+                        </div>
                             <p><strong>What:</strong> ${comment.modify_what}</p>
                             <p><strong>Why:</strong> ${comment.modify_why}</p>
                         `;
 
                         groupContainer.querySelector('.comment-content').appendChild(commentDiv);
                     });
+
+
+                        const isVisible = container.style.display === 'block';
+                        setCommentHeader(policySectionNumberName, data.length, isVisible);
+
                 })
+
                 .catch(error => {
                     console.error('Error loading comments:', error);
+                    console.log(error);
                     container.innerHTML = '<p style="color:red;"><em>Error loading comments.</em></p>';
                 });
-        }
 
+        }
+        function deleteComment(commentId, sectionId) {
+
+
+            if (!confirm('Are you sure you want to delete this comment?')) return;
+
+            fetch(`/ModifyPolicy/DeleteComment?commentId=${encodeURIComponent(commentId)}`, {
+                method: 'DELETE'
+            })
+            .then(response => {
+                if (response.ok) {
+                    loadSectionComments(sectionId); // Refresh comments
+                } else {
+                    alert('Failed to delete comment.');
+                }
+            })
+            .catch(err => {
+                console.error('Error deleting comment:', err);
+                alert('An error occurred while deleting the comment.');
+            });
+        }
 
         function toggleLike(button) {
             const sectionId = button.getAttribute('data-id');
             const img = button.querySelector('img');
             const countSpan = document.getElementById(`like-count-${sectionId}`);
+            const currentUserId = '@Context.Session.GetString("UserDisplayName")';
             var formData = new FormData();
                 formData.append('sectionId', sectionId);
                 formData.append('img', img)
-                formData.append('userId', 'Pratik Shah')
+                formData.append('userId', currentUserId)
 
             fetch('/ModifyPolicy/ToggleLike', {
                 method: 'POST',
@@ -732,27 +902,31 @@
                     document.getElementById('likeSlider').style.right = '0';
                 });
         }
+
         function toggleSectionComments(sectionId) {
             const content = document.getElementById(`comments-${sectionId}`);
-            const header = document.querySelector(`#comments-wrapper-${sectionId} .section-comments-header`);
-
             const isVisible = content.style.display === 'block';
 
             if (!isVisible) {
                 content.style.display = 'block';
-                header.textContent = '💬 Comments (click to collapse)';
 
-                // Only load if empty (avoids repeated fetch)
-                if (content.innerHTML.trim() === '' || content.innerHTML.includes('Loading') || content.innerHTML.includes('Error')) {
-                    content.innerHTML = '<em>Loading comments...</em>';
-                    loadSectionComments(sectionId);
+                if (content.innerHTML.trim() === '' ||
+                    content.innerHTML.includes('Loading') ||
+                    content.innerHTML.includes('Error')) {
+                    content.innerHTML = '<em>Loading modifications...</em>';
+                    loadSectionComments(sectionId); // This will update the header
+                } else {
+                    const commentCount = content.querySelectorAll('.comment-content > div').length;
+                    setCommentHeader(sectionId, commentCount, true);
                 }
-
             } else {
                 content.style.display = 'none';
-                header.textContent = '💬 Comments (click to expand)';
+                const commentCount = content.querySelectorAll('.comment-content > div').length;
+                setCommentHeader(sectionId, commentCount, false);
             }
         }
+
+
 
 
 
@@ -760,6 +934,18 @@
             document.getElementById('likeSlider').style.right = '-300px';
         }
 
+
+        function setCommentHeader(sectionId, commentCount, isVisible) {
+            const header = document.querySelector(`#comments-wrapper-${sectionId} .section-comments-header`);
+            if (!header) return;
+
+            if (commentCount > 0) {
+                header.textContent = `💬 ${commentCount} Modifications (click to ${isVisible ? 'collapse' : 'expand'})`;
+            } else {
+                header.textContent = '💬 No Modifications';
+            }
+        }
+       
 
     </script>
 </body>

@@ -229,7 +229,7 @@ namespace PD_Access.Controllers
             {
 
 
-                var command = new OleDbCommand("SELECT UC.User_ID,C.County_ID, IIf(UC.User_ID Is Not Null,1,0) AS County_Assigned\r\nFROM Counties AS C RIGHT JOIN User_County AS UC ON C.County_ID = UC.County_ID  WHERE UC.User_ID = @Id", connection);
+                var command = new OleDbCommand("SELECT UC.User_ID,C.County_ID, IIf(UC.User_ID Is Not Null,1,0) AS County_Assigned\r\nFROM Counties AS C RIGHT JOIN User_County AS UC ON C.County_ID = UC.County_ID  WHERE UC.User_ID = @Id Order by C.County_Name", connection);
                 command.Parameters.AddWithValue("@Id", userId);
                 connection.Open();
                 var reader = command.ExecuteReader();
@@ -324,7 +324,7 @@ namespace PD_Access.Controllers
             {
                 using (var connection = new OleDbConnection(_connectionString))
                 {
-                    var command = new OleDbCommand("SELECT County_ID, County_Name FROM Counties", connection);
+                    var command = new OleDbCommand("SELECT County_ID, County_Name FROM Counties Order By County_Name", connection);
                     connection.Open();
                     var reader = command.ExecuteReader();
                     while (reader.Read())

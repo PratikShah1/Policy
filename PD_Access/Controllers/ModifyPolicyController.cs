@@ -10,6 +10,16 @@ using Newtonsoft.Json.Linq;
 using System.Web;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Data;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Http;
+using static PD_Access.ViewComponents.UserCountyDropdownViewComponent;
+using System.Text.Json;
+using NuGet.Protocol.Plugins;
+using Microsoft.Graph;
+
 
 
 
@@ -21,31 +31,82 @@ namespace PD_Access.Controllers
     {
         private readonly ILogger<ModifyPolicyController> _logger;
         private readonly string _connectionString;
+        private string _county;
+        
+
 
         public ModifyPolicyController(ILogger<ModifyPolicyController> logger, IConfiguration configuration)
         {
             _connectionString = configuration.GetConnectionString("AccessDbConnection");
             _logger = logger;
         }
+
         public IActionResult Index()
         {
-            var sectionGroupDropdownData = GetSectionGroupDropdownData();
-            var sectionNumberDropdownData = GetSectionNumberDropdownData();
-            var sectionTitleDropdownData = GetSectionTitleDropdownData();
-            // var savedContent = GetSavedContent();
-            var sections = GetSections();
-            var model = new PolicyViewModel
+            try
             {
-                SectionGroupDropdownData = sectionGroupDropdownData,
-                SectionNumberDropdownData = sectionNumberDropdownData,
-                SectionTitleDropdownData = sectionTitleDropdownData,
-                // SavedContent = savedContent
-            };
+                //First Get the UserName and User Role
+                var userName = "";
+                // Check if User has actually logged in or directly accessing the page. If not Return to No Access Page.
+                if (HttpContext.Session.GetString("UserDisplayName") == null || HttpContext.Session.GetString("UserDisplayName") == "")
+                {
+                    return View("Error");
+                }
+                // Get County from query string.
+                // Get Default County when the app loads for the first time
 
-            ViewBag.Sections = sections;
-           
 
-            return View(model);
+                _county = Request.Query["county"];
+
+                if (_county == null || _county == "")
+                {
+                    GetDefaultCounty();
+
+                }
+                else
+                {
+                    //_county = HttpContext.Session.GetString("DefaultCounty");
+                    HttpContext.Session.SetString("DefaultCounty", _county);
+                }
+
+
+                // This is to check if a user directly tries to access a county by changing from the URL.
+                if (_county != null)
+                {
+                    bool correctCounty = CheckMemberCounty(_county);
+                    if (!correctCounty)
+                    {
+                        ViewBag.wrongCounty = true;
+                        return View("Error");
+                    }
+                }
+                // Make sure User has access to that County. If not redirect them to No Access Page.
+
+
+                var sectionGroupDropdownData = GetSectionGroupDropdownData();
+                var sectionNumberDropdownData = GetSectionNumberDropdownData();
+                var sectionTitleDropdownData = GetSectionTitleDropdownData();
+
+                // var savedContent = GetSavedContent();
+                var sections = GetSections();
+                var model = new PolicyViewModel
+                {
+                    SectionGroupDropdownData = sectionGroupDropdownData,
+                    SectionNumberDropdownData = sectionNumberDropdownData,
+                    SectionTitleDropdownData = sectionTitleDropdownData,
+                    // SavedContent = savedContent
+                };
+
+                ViewBag.Sections = sections;
+
+
+                return View(model);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return View("Error");
+            }
 
         }
         private List<ModifyPolicyModel> GetSectionGroupDropdownData()
@@ -88,7 +149,7 @@ namespace PD_Access.Controllers
             }
             return data;
         }
-        private List<ModifyPolicyModel> GetSectionTitleDropdownData()
+        public List<ModifyPolicyModel> GetSectionTitleDropdownData()
         {
             var data = new List<ModifyPolicyModel>();
             using (var connection = new OleDbConnection(_connectionString))
@@ -318,9 +379,10 @@ namespace PD_Access.Controllers
                         PolicySectionName = reader.GetString(2),
                         PolicySectionNumberName = reader.GetInt32(3),
                         PolicySectionNameNumber = reader.GetString(4),
-                        PolicyText = reader.GetString(5)
+                        PolicyText = reader.GetString(5),
+                        Comments = GetCommentsByPolicySectionNumberName(reader.GetInt32(3))
                     };
-                    GetCommentsByPolicySectionNumberName(policy.PolicySectionNumberName);
+                    //GetCommentsByPolicySectionNumberName(policy.PolicySectionNumberName);
                     sections.Add(policy);
                 }
             }
@@ -360,17 +422,22 @@ namespace PD_Access.Controllers
         [HttpPost]
         public JsonResult Save([FromBody] ModifyPolicyModel model)
         {
-            
-                using (var connection = new OleDbConnection(_connectionString))
+            if (_county == null || _county == "")
+            {
+                _county = HttpContext.Session.GetString("DefaultCounty");  // By def
+            }
+
+            using (var connection = new OleDbConnection(_connectionString))
                 {
                     connection.Open();
-                    var command = new OleDbCommand("INSERT INTO tbl_content_comment (section_number, what_change, why_change, user_id,addelmod) VALUES (@PolicySectionNumberName, @What, @Why, @UserId, @Action)", connection);
+                    var command = new OleDbCommand("INSERT INTO tbl_content_comment (section_number, what_change, why_change, user_id,addelmod,county) VALUES (@PolicySectionNumberName, @What, @Why, @UserId, @Action,@County)", connection);
                     command.Parameters.AddWithValue("@PolicySectionNumberName", model.PolicySectionNumberName);
                     command.Parameters.AddWithValue("@What", model.modify_what);
                     command.Parameters.AddWithValue("@Why", model.modify_why);
-                    command.Parameters.AddWithValue("@UserId", model.modify_user_id);
+                    command.Parameters.AddWithValue("@UserId", HttpContext.Session.GetString("UserDisplayName"));
                     command.Parameters.AddWithValue("@Action", model.modify_value);
-                    command.ExecuteNonQuery();
+                command.Parameters.AddWithValue("@County", _county);
+                command.ExecuteNonQuery();
                 }
                 return Json(new { success = true });
           
@@ -381,23 +448,50 @@ namespace PD_Access.Controllers
         public List<ModifyPolicyModel> GetCommentsByPolicySectionNumberName(int policySectionNumberName)
         {
             var comments = new List<ModifyPolicyModel>();
+            var command = new OleDbCommand();
+
+            if ( _county == null || _county == "") {
+                _county = HttpContext.Session.GetString("DefaultCounty");  
+            }
+
           
             using (var connection = new OleDbConnection(_connectionString))
             {
                 connection.Open();
-                var command = new OleDbCommand("SELECT what_change, why_change, user_id,addelmod FROM tbl_content_comment WHERE section_number = @PolicySectionNumberName order by user_id", connection);
-                command.Parameters.AddWithValue("@PolicySectionNumberName", policySectionNumberName);
+                if (HttpContext.Session.GetString("PublicPolicy") == "true" && _county == "All")
+                {
+                    command = new OleDbCommand("SELECT ID,what_change, why_change, user_id,addelmod FROM tbl_content_comment WHERE section_number = @PolicySectionNumberName order by user_id", connection);
+                    command.Parameters.AddWithValue("@PolicySectionNumberName", policySectionNumberName);
+                    command.Parameters.AddWithValue("@County", _county);
+
+                }
+
+                else if (HttpContext.Session.GetString("PublicPolicy") == "true" || HttpContext.Session.GetString("ReadOnly") == "true")
+                {
+                    command = new OleDbCommand("SELECT ID,what_change, why_change, user_id,addelmod FROM tbl_content_comment WHERE section_number = @PolicySectionNumberName and County = @County order by user_id", connection);
+                    command.Parameters.AddWithValue("@PolicySectionNumberName", policySectionNumberName);
+                    command.Parameters.AddWithValue("@County", _county);
+                }
+                else
+                {
+                    command = new OleDbCommand("SELECT ID,what_change, why_change, user_id,addelmod FROM tbl_content_comment WHERE section_number = @PolicySectionNumberName and user_id = @UserName and County = @County order by user_id", connection);
+                    command.Parameters.AddWithValue("@PolicySectionNumberName", policySectionNumberName);
+                    command.Parameters.AddWithValue("@UserName", HttpContext.Session.GetString("UserDisplayName"));
+                    command.Parameters.AddWithValue("@County", _county);
+                }
+
                 var reader = command.ExecuteReader();
                 while (reader.Read())
                 {
                     comments.Add(new ModifyPolicyModel
                     {
-                        modify_what = reader.GetString(0),
-                        modify_why = reader.GetString(1),
-                        modify_user_id = reader.GetString(2),
-                        modify_action = reader.GetInt32(3) == 1 ? "Add" :
-                                        reader.GetInt32(3) == 2 ? "Delete" :
-                                        reader.GetInt32(3) == 3 ? "Modify" : "Unknown"
+                        comment_id = reader.GetInt32(0),
+                        modify_what = reader.GetString(1),
+                        modify_why = reader.GetString(2),
+                        modify_user_id = reader.GetString(3),
+                        modify_action = reader.GetInt32(4) == 1 ? "Add" :
+                                        reader.GetInt32(4) == 2 ? "Delete" :
+                                        reader.GetInt32(4) == 3 ? "Modify" : "Unknown"
 
                     });
                 }
@@ -409,12 +503,17 @@ namespace PD_Access.Controllers
         public JsonResult GetLikedSections(string userId)
         {
             var likedSectionIds = new List<int>();
+            if (_county == null || _county == "")
+            {
+                _county = HttpContext.Session.GetString("DefaultCounty");  
+            }
 
             using (var connection = new OleDbConnection(_connectionString))
             {
                 connection.Open();
-                var command = new OleDbCommand("SELECT section_number FROM tbl_content_like WHERE user_id = @userId", connection);
+                var command = new OleDbCommand("SELECT section_number FROM tbl_content_like WHERE user_id = @userId AND county = @County", connection);
                 command.Parameters.AddWithValue("@userId", userId);
+                command.Parameters.AddWithValue("@County", _county);
 
                 var reader = command.ExecuteReader();
                 while (reader.Read())
@@ -430,31 +529,38 @@ namespace PD_Access.Controllers
         public JsonResult ToggleLike(int sectionId, string userId)
         {
             bool alreadyLiked = false;
+            if (_county == null || _county == "")
+            {
+                _county = HttpContext.Session.GetString("DefaultCounty");  // By def
+            }
 
             using (var connection = new OleDbConnection(_connectionString))
             {
                 connection.Open();
 
                 // Check if like already exists
-                var checkCmd = new OleDbCommand("SELECT COUNT(*) FROM tbl_content_like WHERE section_number = @section AND user_id = @user", connection);
+                var checkCmd = new OleDbCommand("SELECT COUNT(*) FROM tbl_content_like WHERE section_number = @section AND user_id = @user And county = @County", connection);
                 checkCmd.Parameters.AddWithValue("@section", sectionId);
                 checkCmd.Parameters.AddWithValue("@user", userId);
+                checkCmd.Parameters.AddWithValue("@County", _county);
 
                 int count = (int)checkCmd.ExecuteScalar();
                 alreadyLiked = count > 0;
 
                 if (alreadyLiked)
                 {
-                    var deleteCmd = new OleDbCommand("DELETE FROM tbl_content_like WHERE section_number = @section AND user_id = @user", connection);
+                    var deleteCmd = new OleDbCommand("DELETE FROM tbl_content_like WHERE section_number = @section AND user_id = @user And county = @County ", connection);
                     deleteCmd.Parameters.AddWithValue("@section", sectionId);
                     deleteCmd.Parameters.AddWithValue("@user", userId);
+                    deleteCmd.Parameters.AddWithValue("@County", _county);
                     deleteCmd.ExecuteNonQuery();
                 }
                 else
                 {
-                    var insertCmd = new OleDbCommand("INSERT INTO tbl_content_like (section_number, user_id) VALUES (@section, @user)", connection);
+                    var insertCmd = new OleDbCommand("INSERT INTO tbl_content_like (section_number, user_id, county) VALUES (@section, @user, @County)", connection);
                     insertCmd.Parameters.AddWithValue("@section", sectionId);
                     insertCmd.Parameters.AddWithValue("@user", userId);
+                    insertCmd.Parameters.AddWithValue("@County", _county);
                     insertCmd.ExecuteNonQuery();
                 }
             }
@@ -465,11 +571,32 @@ namespace PD_Access.Controllers
         public JsonResult GetLikeCounts()
         {
             var counts = new Dictionary<int, int>();
+            var command = new OleDbCommand();
+            if (_county == null || _county == "")
+            {
+                _county = HttpContext.Session.GetString("DefaultCounty");  // By def
+               
+            }
 
             using (var connection = new OleDbConnection(_connectionString))
             {
+                if (HttpContext.Session.GetString("PublicPolicy") == "true" && _county == "All")
+                {
+                    command = new OleDbCommand("SELECT section_number, COUNT(*) FROM tbl_content_like GROUP BY section_number", connection);
+
+                }
+                else if (HttpContext.Session.GetString("PublicPolicy") == "true" || HttpContext.Session.GetString("ReadOnly") == "true")
+                {
+                    command = new OleDbCommand("SELECT section_number, COUNT(*) FROM tbl_content_like WHERE county = @CountyName GROUP BY section_number", connection);
+                }
+                else  // Only show likes for a particular user
+                {
+                    command = new OleDbCommand("SELECT section_number, COUNT(*) FROM tbl_content_like WHERE county = @county AND user_id = @userName GROUP BY section_number", connection);
+                }
+
+                command.Parameters.AddWithValue("@CountyName", _county);
+                command.Parameters.AddWithValue("@userName", HttpContext.Session.GetString("UserDisplayName"));
                 connection.Open();
-                var command = new OleDbCommand("SELECT section_number, COUNT(*) FROM tbl_content_like GROUP BY section_number", connection);
                 var reader = command.ExecuteReader();
                 while (reader.Read())
                 {
@@ -477,33 +604,172 @@ namespace PD_Access.Controllers
                     int count = reader.GetInt32(1);
                     counts[section] = count;
                 }
+                connection.Close();
             }
-
+           
             return Json(counts);
         }
         [HttpGet]
         public JsonResult GetLikersBySection(int sectionNumber)
         {
             var users = new List<object>();
+            var command = new OleDbCommand();
+
+            if (_county == null || _county == "")
+            {
+                _county = HttpContext.Session.GetString("DefaultCounty");  // By def
+
+            }
+
 
             using (var connection = new OleDbConnection(_connectionString))
             {
                 connection.Open();
-                var command = new OleDbCommand("SELECT user_id, County FROM tbl_content_like WHERE section_number = @section", connection);
-                command.Parameters.AddWithValue("@section", sectionNumber);
 
+                if (HttpContext.Session.GetString("PublicPolicy") == "true" && _county == "All")
+                {
+                    command = new OleDbCommand("SELECT user_id, County FROM tbl_content_like WHERE section_number = @section", connection);
+
+                }
+                else
+                {
+                    command = new OleDbCommand("SELECT user_id, County FROM tbl_content_like WHERE section_number = @section and County = @county", connection);
+                }
+
+                command.Parameters.AddWithValue("@section", sectionNumber);
+                command.Parameters.AddWithValue("@county", _county);
                 var reader = command.ExecuteReader();
                 while (reader.Read())
                 {
                     users.Add(new
                     {
                         UserId = reader.GetString(0),
-                        County = reader.GetInt32(1)
+                        County = reader.GetString(1)
                     });
                 }
             }
 
             return Json(users);
+        }
+        private ModifyPolicyModel GetUserRole (string userName)
+        {
+
+
+            ModifyPolicyModel userRole = null;
+            ;
+            using (var connection = new OleDbConnection(_connectionString))
+            {
+                var command = new OleDbCommand("SELECT Users.userName, Users.userName, Roles.roleName, Roles.Role_ID FROM Roles INNER JOIN (Users INNER JOIN User_Role ON Users.User_ID = User_Role.User_ID) ON Roles.Role_ID = User_Role.Roles_ID WHERE userName = @UserName", connection);
+                command.Parameters.AddWithValue("@userName", userName);
+                connection.Open();
+                var reader = command.ExecuteReader();
+                if (reader.Read())
+                {
+                    userRole = new ModifyPolicyModel
+                    {
+                        userRole = (int)reader["Role_ID"],
+                    };
+                }
+
+            }
+            ViewBag.UserRole = userRole;
+            return userRole;
+
+        }
+        private bool CheckMemberCounty(string CountyName)
+        {
+            bool yesNo = false;
+            // If Public Policy or ReadOnly user then check in the DB if the CountyName matches 
+            if (HttpContext.Session.GetString("PublicPolicy") == "true" && _county == "All")
+            { 
+                yesNo = true;
+            }
+            else if (HttpContext.Session.GetString("PublicPolicy") == "true" || HttpContext.Session.GetString("ReadOnly") == "true")
+            {
+                using (var connection = new OleDbConnection(_connectionString))
+                {
+                    connection.Open();
+                    var command = new OleDbCommand("SELECT * FROM Counties where County_Name = @CountyName order by County_Name", connection);
+                    command.Parameters.AddWithValue("@CountyName", CountyName);
+                    var reader = command.ExecuteReader();
+
+
+                    if (reader.HasRows)
+                    {
+
+                        yesNo = true;
+                    }
+                }
+
+            }
+            else
+            {
+
+                var jsonString = HttpContext.Session.GetString("GroupNames");
+                // Deserialize to a list of strings
+                var groupNames = JsonSerializer.Deserialize<List<string>>(jsonString);
+                yesNo = groupNames.Contains(CountyName);
+
+            }
+            return yesNo;
+        }
+        public string GetDefaultCounty()
+        {
+
+
+
+            string defaultCounty = "";
+            if (HttpContext.Session.GetString("ReadOnly") == "true")
+            {
+                using (var connection = new OleDbConnection(_connectionString))
+                {
+                    connection.Open();
+                    var command = new OleDbCommand("SELECT top 1 * FROM Counties order by County_Name", connection);
+                    var reader = command.ExecuteReader();
+
+
+                    if (reader.Read())
+                    {
+
+                        defaultCounty = reader.GetString(2);
+                        _county = defaultCounty;
+                    }
+                }
+
+            }
+            else if (HttpContext.Session.GetString("PublicPolicy") == "true")  // New request where if user is Public Policy they should have option for "All" counties.
+            {
+                _county = "All";
+            }
+            else  // Users specific to certain counties
+            {
+                var jsonString = HttpContext.Session.GetString("GroupNames");
+                var groupNames = JsonSerializer.Deserialize<List<string>>(jsonString);
+                groupNames.Sort();
+                _county = groupNames[0].ToString();
+                defaultCounty = _county;
+            }
+
+            HttpContext.Session.SetString("DefaultCounty", _county);
+            return defaultCounty;
+            }
+
+        public bool DeleteComment(int CommentId)
+        {
+            bool delete = false;
+
+            using (var connection = new OleDbConnection(_connectionString))
+            {
+                connection.Open();
+                var deleteComment = new OleDbCommand("DELETE FROM tbl_content_comment WHERE ID = @CommentId", connection);
+                deleteComment.Parameters.AddWithValue("@CommentId", CommentId);
+                deleteComment.ExecuteNonQuery();
+                delete = true;
+            }
+
+
+
+                return delete;
         }
 
 

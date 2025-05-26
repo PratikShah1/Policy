@@ -46,3 +46,18 @@ button.accept-policy {
   white-space: nowrap;
   line-height: 60px;
 }
+.section-filters, .card, .form-wrapper {
+    position: relative;
+    z-index: 1;
+    overflow: visible;
+}
+.parent-container {
+    overflow: visible !important;
+    position: relative; /* Important for z-index to take effect */
+    z-index: 1; /* Or higher than surrounding elements */
+}
+
+.dropdown-menu {
+    z-index: 1050; /* Bootstrap default, higher than most components */
+    position: absolute;
+}

@@ -10,6 +10,9 @@ namespace PD_Access.Models
         public string SectionTitle { get; set; }
         public int section_number { get; set; }
         public string section_name { get; set; }
+        public int userRole { get; set; }
+        public List<ModifyPolicyModel> Comments { get; set; } = new List<ModifyPolicyModel>();
+
 
 
         public class PolicyViewModel
@@ -18,6 +21,7 @@ namespace PD_Access.Models
             public List<ModifyPolicyModel> SectionNumberDropdownData { get; set; }
             public List<ModifyPolicyModel> SectionTitleDropdownData { get; set; }
             public string SavedContent { get; set; }
+          
         }
 
 
@@ -33,6 +37,7 @@ namespace PD_Access.Models
         public string modify_user_id { get; set; }
         public int modify_value {get;set;}
         public string modify_action { get;set; }
+        public int comment_id { get; set; }
 
 
 

@@ -3,18 +3,28 @@
     ViewData["Title"] = "Error";
 }
 
-<h1 class="text-danger">Error.</h1>
-<h2 class="text-danger">An error occurred while processing your request.</h2>
+@if (string.IsNullOrEmpty(ViewBag.UserName as string))
+{
+    <h1 class="text-danger">UnAuthorized User.</h1>
+    <h2 class="text-danger">You are not Authorized to access this application. If you think you have received this message in error, please Login here.</h2>
+}
 
-@if (Model.ShowRequestId)
+@if ((ViewBag.wrongCounty as bool?) == true)
+{
+    <h1 class="text-danger">UnAuthorized County.</h1>
+    <h2 class="text-danger">You are not Authorized to view this county. Please pick the correct county from the drop down.</h2>
+}
+
+
+@* @if (Model.ShowRequestId)
 {
     <p>
         <strong>Request ID:</strong> <code>@Model.RequestId</code>
     </p>
-}
+} *@
 
-<h3>Development Mode</h3>
-<p>
+@*  <h3>Development Mode</h3> 
+ <p>
     Swapping to <strong>Development</strong> environment will display more detailed information about the error that occurred.
 </p>
 <p>
@@ -22,4 +32,4 @@
     It can result in displaying sensitive information from exceptions to end users.
     For local debugging, enable the <strong>Development</strong> environment by setting the <strong>ASPNETCORE_ENVIRONMENT</strong> environment variable to <strong>Development</strong>
     and restarting the app.
-</p>
+</p>  *@
