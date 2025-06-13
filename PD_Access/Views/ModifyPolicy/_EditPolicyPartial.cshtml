@@ -31,22 +31,75 @@
     <h4 id="actionHeaderText1">What Would You Like To Change?</h4>
 </div>
 <div id="editorContainer1" style="display: none;">
-    <textarea name="editor1"></textarea>
+    <textarea id="editor1" name="editor1"></textarea>
 </div>
 <div class="col-sm-12 header-style mt-4 mb-2" id="actionHeader2" style="display: none;">
     <h4 id="actionHeaderText2">Please Provide reason Change?</h4>
 </div>
 <div id="editorContainer2" style="display: none;">
-    <textarea name="editor2"></textarea>
+    <textarea id="editor2" name="editor2"></textarea>
 </div>
 <div class="form-group row" id="saveButtonContainer" style="display: none;">
     <div class="col-sm-12 mt-4 text-end">
         <button type="button" class="btn btn-primary" onclick="submitForm(event)">Save</button>
     </div>
 </div>
+
 <script>
-    CKEDITOR.replace('editor1', {});
-    CKEDITOR.replace('editor2', {});
+
+    setTimeout(function() {
+        var arrOptions = [
+                "bold",
+                "italic",
+                "underline",
+                "strikethrough",
+                "justifyLeft",
+                "justifyCenter",
+                "justifyRight",
+                "justifyFull",
+                "insertUnorderedList",
+                "insertOrderedList",
+                "indent",
+                "outdent",
+                "createLink",
+                "unlink",
+                "insertImage",
+                "insertFile",
+                "subscript",
+                "superscript",
+                "tableWizard",
+                "createTable",
+                "addRowAbove",
+                "addRowBelow",
+                "addColumnLeft",
+                "addColumnRight",
+                "deleteRow",
+                "deleteColumn",
+                "mergeCellsHorizontally",
+                "mergeCellsVertically",
+                "splitCellHorizontally",
+                "splitCellVertically",
+                "viewHtml",
+                "formatting",
+                "cleanFormatting",
+                "copyFormat",
+                "applyFormat",
+                "fontName",
+                "fontSize",
+                "foreColor",
+                "backColor",
+                "print"
+            ];
+
+        $("#editor1").kendoEditor({
+            tools: arrOptions
+        });
+
+        $("#editor2").kendoEditor({
+            tools: arrOptions
+        });
+
+    }, 1000);
 
     var modifyDropdown = document.getElementById('modifyDropdown');
     var actionHeader1 = document.getElementById('actionHeader1');
@@ -93,8 +146,8 @@
     });
 
     function validateEditors() {
-        var editor1Data = CKEDITOR.instances.editor1.getData();
-        var editor2Data = CKEDITOR.instances.editor2.getData();
+        var editor1Data = $("#editor1").data("kendoEditor").value();
+        var editor2Data = $("#editor2").data("kendoEditor").value();
         if (!editor1Data.trim() || !editor2Data.trim()) {
             alert('Both fields must be filled out.');
             return false; // Prevent form submission
@@ -105,9 +158,12 @@
     function submitForm(event) {
         event.preventDefault(); // Prevent default form submission
         if (validateEditors()) {
+            var editor1Data = $("#editor1").data("kendoEditor");
+            var editor2Data = $("#editor2").data("kendoEditor");
+
             var data = {
-                modify_what: CKEDITOR.instances.editor1.getData(),
-                modify_why: CKEDITOR.instances.editor2.getData(),
+                modify_what: editor1Data.value(),
+                modify_why: editor2Data.value(),
                 PolicySectionNumberName : @Model.PolicySectionNumberName ,
                 modify_value: parseInt(document.getElementById("modifyDropdown").value)
             };
@@ -138,8 +194,10 @@
             saveButtonContainer.style.display = 'none';
 
             // Clear the editors
-            CKEDITOR.instances.editor1.setData('');
-            CKEDITOR.instances.editor2.setData('');
+            var editor1 = $("#editor1").data("kendoEditor");
+            var editor2 = $("#editor2").data("kendoEditor");
+            editor1.value('');
+            editor2.value('');
 
         } else {
             alert('Failed to save information: ' + data.message);

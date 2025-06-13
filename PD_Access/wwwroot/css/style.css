@@ -71,7 +71,7 @@ table td, table th {
     padding: 20px;
     border: 1px solid #888;
     width: 50%;
-    max-width: 700px !important; /* Adjust as needed */
+    max-width: 1000px !important; /* Adjust as needed */
     height: calc(100vh - 180px);
     overflow-y: auto;
 }
@@ -99,6 +99,9 @@ table td, table th {
 }
     .modal-content .header-style h3{
         color:#ffffff !important;
+    }
+    .modal-content .header-style h4 {
+        color: #ffffff !important;
     }
     #editFormContainer {
         padding-top: 16px;
